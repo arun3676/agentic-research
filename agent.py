@@ -7,7 +7,7 @@ import os
 import json
 from datetime import datetime
 from typing import Dict, List, Tuple, Optional
-from langchain.llms import OpenAI
+from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.schema import BaseOutputParser
@@ -42,13 +42,10 @@ class CustomerSupportAgent:
             model_name: OpenAI model to use (default: gpt-4)
             temperature: Model temperature for response creativity (default: 0.7)
         """
-        api_key = os.getenv('OPENAI_API_KEY')
-        if not api_key:
-            raise ValueError(
-                "OpenAI API key not found. Please set OPENAI_API_KEY environment variable or configure in Streamlit secrets."
-            )
-        
-        self.llm = OpenAI(
+        # Get API key using the helper
+        api_key = self._get_api_key()
+        # Use ChatOpenAI for chat models, explicitly passing model_name and api_key
+        self.llm = ChatOpenAI(
             model_name=model_name,
             temperature=temperature,
             openai_api_key=api_key
