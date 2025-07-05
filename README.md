@@ -17,7 +17,10 @@ This project implements a customer support agent that:
 ├── agent.py              # Main agent logic with CoT prompting
 ├── test_agent.py         # Batch testing script
 ├── visualize.py          # Analysis and visualization tools
+├── review_app.py         # Streamlit web interface
 ├── requirements.txt      # Python dependencies
+├── .streamlit/config.toml # Streamlit configuration
+├── DEPLOYMENT.md         # Deployment guide
 ├── README.md            # This file
 └── test_results.json    # Generated test results (after running tests)
 ```
@@ -30,7 +33,17 @@ pip install -r requirements.txt
 ```
 
 ### 2. Set OpenAI API Key
-Edit `agent.py` and replace the API key placeholder with your actual OpenAI API key.
+**Option A: Environment Variable (Recommended)**
+```bash
+export OPENAI_API_KEY="your-api-key-here"
+```
+
+**Option B: Streamlit Secrets (For Deployment)**
+Create `.streamlit/secrets.toml`:
+```toml
+[openai]
+api_key = "your-api-key-here"
+```
 
 ### 3. Test the Agent
 ```bash
@@ -42,7 +55,13 @@ python test_agent.py
 
 # Generate analysis and visualizations
 python visualize.py
+
+# Launch web interface
+streamlit run review_app.py
 ```
+
+### 4. Deploy to Production
+See [DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment guide to Streamlit Community Cloud.
 
 ## 🔧 Core Components
 
@@ -78,6 +97,14 @@ python visualize.py
 - Task routing visualization
 - Quality score assessment
 - Comprehensive research summary
+
+### review_app.py
+**Streamlit web interface that provides:**
+- Interactive results review and analysis
+- Live agent query testing
+- Data visualization and metrics
+- Export functionality for research data
+- Professional presentation interface
 
 ## 📊 Research Insights
 
@@ -134,10 +161,10 @@ Running `visualize.py` generates:
 4. **Create A/B testing** for different prompt strategies
 
 ### For Resume Enhancement
-1. **Add web interface** using Flask/FastAPI
+1. **✅ Web interface** using Streamlit (implemented)
 2. **Implement real-time chat** with WebSockets
 3. **Add authentication** and user management
-4. **Create deployment pipeline** with Docker
+4. **✅ Deployment pipeline** with Streamlit Cloud (implemented)
 
 ## 🛠️ Technical Requirements
 
@@ -166,15 +193,20 @@ python test_agent.py
 ```python
 python visualize.py
 # Creates plots and generates research summary
+
+# Web Interface
+streamlit run review_app.py
+# Launches interactive web interface for analysis
 ```
 
 ## 🎯 Next Steps for Research
 
-1. **Run the complete pipeline** to generate data
-2. **Analyze the visualizations** for insights
+1. **✅ Run the complete pipeline** to generate data
+2. **✅ Analyze the visualizations** for insights
 3. **Extend with attention analysis** using transformers
-4. **Document findings** for your research paper
-5. **Prepare presentation** with generated plots
+4. **✅ Document findings** for your research paper
+5. **✅ Prepare presentation** with generated plots
+6. **🚀 Deploy to production** using Streamlit Cloud
 
 ## 📚 Research Paper Outline
 
