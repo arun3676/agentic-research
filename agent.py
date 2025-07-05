@@ -13,6 +13,16 @@ from langchain.chains import LLMChain
 from langchain.schema import BaseOutputParser
 import re
 
+# --- Ensure OPENAI_API_KEY is set from Streamlit secrets if available ---
+try:
+    import streamlit as st
+    if hasattr(st, 'secrets') and st.secrets:
+        api_key = st.secrets.get("openai", {}).get("api_key")
+        if api_key:
+            os.environ["OPENAI_API_KEY"] = api_key
+except Exception:
+    pass
+
 class CustomerSupportAgent:
     """
     AI Customer Support Agent with Chain-of-Thought reasoning for research analysis.
@@ -32,13 +42,10 @@ class CustomerSupportAgent:
             model_name: OpenAI model to use (default: gpt-4)
             temperature: Model temperature for response creativity (default: 0.7)
         """
-        # Load API key from multiple sources
-        api_key = self._get_api_key()
-        
+        api_key = os.getenv('OPENAI_API_KEY')
         if not api_key:
             raise ValueError(
-                "OpenAI API key not found. Please set OPENAI_API_KEY environment variable, "
-                "configure in Streamlit secrets, or pass directly to constructor."
+                "OpenAI API key not found. Please set OPENAI_API_KEY environment variable or configure in Streamlit secrets."
             )
         
         self.llm = OpenAI(
