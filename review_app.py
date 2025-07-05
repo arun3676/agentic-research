@@ -113,12 +113,20 @@ def split_answer_reasoning(response: str):
 
 # Helper to run live agent query
 def run_live_agent(query: str):
-    # Dynamically import agent.py
-    spec = importlib.util.spec_from_file_location("agent", os.path.join(os.getcwd(), "agent.py"))
-    agent_module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(agent_module)
-    agent = agent_module.CustomerSupportAgent()
-    return agent.run(query)
+    try:
+        # Dynamically import agent.py
+        spec = importlib.util.spec_from_file_location("agent", os.path.join(os.getcwd(), "agent.py"))
+        agent_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(agent_module)
+        agent = agent_module.CustomerSupportAgent()
+        return agent.run(query)
+    except ValueError as e:
+        if "API key" in str(e):
+            return "ERROR: OpenAI API key not configured. Please set your API key in Streamlit secrets or environment variables."
+        else:
+            return f"ERROR: {str(e)}"
+    except Exception as e:
+        return f"ERROR: Failed to initialize agent - {str(e)}"
 
 def main():
     st.set_page_config(page_title="AI Agent Research Review", layout="wide")
