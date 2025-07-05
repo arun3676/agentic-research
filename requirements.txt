@@ -1,7 +1,7 @@
 streamlit
 langchain
 langchain_community
-openai
+openai==0.28
 transformers
 numpy
 matplotlib
