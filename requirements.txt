@@ -1,0 +1,8 @@
+streamlit
+langchain
+openai
+transformers
+numpy
+matplotlib
+pandas
+plotly 
