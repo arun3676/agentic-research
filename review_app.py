@@ -285,49 +285,268 @@ def show_detailed_analysis(results):
         st.dataframe(quality_df)
 
 def show_visualizations(results):
-    """Show generated visualizations"""
+    """Show generated visualizations from visualize.py"""
     st.header("📈 Generated Visualizations")
     
+    # Define plot files with their descriptions
+    plot_configs = {
+        "response_lengths.png": {
+            "title": "Response Length Distribution",
+            "description": "Histogram showing the distribution of agent response lengths in characters. Helps understand response complexity and consistency."
+        },
+        "reasoning_patterns.png": {
+            "title": "Reasoning Keywords Analysis", 
+            "description": "Distribution of reasoning keywords (because, since, therefore, etc.) found in agent responses. Indicates reasoning depth."
+        },
+        "task_routing.png": {
+            "title": "Task Routing Distribution",
+            "description": "Pie chart showing how queries are categorized and routed (order status, escalation, general inquiries)."
+        },
+        "quality_analysis.png": {
+            "title": "Response Quality Scores",
+            "description": "Histogram of quality scores (0-100) based on reasoning presence, action items, and response length."
+        }
+    }
+    
     # Check for generated plots
-    plot_files = ["response_lengths.png", "reasoning_patterns.png", "task_routing.png", "quality_analysis.png"]
-    available_plots = [f for f in plot_files if os.path.exists(f)]
+    available_plots = [f for f in plot_configs.keys() if os.path.exists(f)]
+    missing_plots = [f for f in plot_configs.keys() if not os.path.exists(f)]
     
     if not available_plots:
-        st.warning("No visualization files found. Run `python visualize.py` first.")
+        st.warning("⚠️ No visualization files found!")
+        st.info("💡 To generate visualizations, run: `python visualize.py`")
+        st.write("**Expected files:**")
+        for plot_file in plot_configs.keys():
+            st.write(f"- {plot_file}")
         return
     
-    # Display plots in columns
-    cols = st.columns(2)
+    # Show status of available vs missing plots
+    if missing_plots:
+        st.info(f"📊 Showing {len(available_plots)} of {len(plot_configs)} visualizations")
+        if st.checkbox("Show missing files"):
+            st.write("**Missing visualization files:**")
+            for plot_file in missing_plots:
+                st.write(f"- {plot_file}")
+    
+    # Display plots in two columns with enhanced information
+    st.subheader("📊 Research Visualizations")
+    
+    # Create two columns for layout
+    col1, col2 = st.columns(2)
+    
     for i, plot_file in enumerate(available_plots):
-        with cols[i % 2]:
-            st.image(plot_file, caption=plot_file.replace('.png', '').replace('_', ' ').title(), use_column_width=True)
+        # Choose which column to use
+        current_col = col1 if i % 2 == 0 else col2
+        
+        with current_col:
+            # Get plot configuration
+            config = plot_configs[plot_file]
+            
+            # Create expandable section for each plot
+            with st.expander(f"📈 {config['title']}", expanded=True):
+                # Display the image
+                st.image(plot_file, caption=config['title'], use_column_width=True)
+                
+                # Add description
+                st.write(f"**Description:** {config['description']}")
+                
+                # Add file info
+                file_size = os.path.getsize(plot_file) / 1024  # KB
+                st.write(f"**File:** {plot_file} ({file_size:.1f} KB)")
+                
+                # Add timestamp if available
+                try:
+                    file_time = datetime.fromtimestamp(os.path.getmtime(plot_file))
+                    st.write(f"**Generated:** {file_time.strftime('%Y-%m-%d %H:%M:%S')}")
+                except:
+                    pass
+    
+    # Add summary information
+    st.subheader("📋 Visualization Summary")
+    
+    # Calculate some basic stats from the results for context
+    if results:
+        total_queries = len(results)
+        successful_queries = len([r for r in results if not r['response'].startswith('ERROR')])
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total Queries", total_queries)
+        with col2:
+            st.metric("Successful Responses", successful_queries)
+        with col3:
+            st.metric("Visualizations Available", len(available_plots))
+    
+    # Add instructions for generating new visualizations
+    st.subheader("🔄 Regenerate Visualizations")
+    st.write("To update these visualizations with new data:")
+    st.code("python visualize.py", language="bash")
+    st.write("This will analyze the current `test_results.json` and create updated plots.")
 
 def show_research_metrics(results):
-    """Show comprehensive research metrics"""
+    """Show comprehensive research metrics using agent analytics"""
     st.header("📊 Research Metrics Summary")
     
-    # Calculate metrics
+    # Check if we have results to analyze
+    if not results:
+        st.warning("⚠️ No results data available for analysis.")
+        st.info("💡 Run `python test_agent.py` to generate test results first.")
+        return
+    
+    # Try to get analytics from agent (if available)
+    try:
+        # Dynamically import agent to get analytics
+        spec = importlib.util.spec_from_file_location("agent", os.path.join(os.getcwd(), "agent.py"))
+        agent_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(agent_module)
+        
+        # Create agent instance and load responses
+        agent = agent_module.CustomerSupportAgent()
+        agent.responses = results  # Load the results into agent
+        analytics = agent.get_analytics()
+        
+        if analytics:
+            st.success("✅ Using agent analytics for comprehensive metrics")
+            display_agent_analytics(analytics)
+        else:
+            st.warning("⚠️ Agent analytics not available, using basic calculations")
+            display_basic_analytics(results)
+            
+    except Exception as e:
+        st.warning(f"⚠️ Could not load agent analytics: {str(e)}")
+        st.info("💡 Using basic analytics instead")
+        display_basic_analytics(results)
+
+def display_agent_analytics(analytics):
+    """Display metrics using agent's get_analytics method"""
+    
+    # Main metrics in 2x2 layout
+    st.subheader("📈 Core Performance Metrics")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.metric(
+            label="Total Queries", 
+            value=analytics.get('total_queries', 0),
+            help="Total number of queries processed by the agent"
+        )
+        st.metric(
+            label="Success Rate", 
+            value=f"{analytics.get('success_rate', 0):.1f}%",
+            help="Percentage of queries that were processed successfully"
+        )
+    
+    with col2:
+        st.metric(
+            label="Avg Response Length", 
+            value=f"{analytics.get('avg_response_length', 0):.0f} chars",
+            help="Average number of characters in agent responses"
+        )
+        st.metric(
+            label="Successful Queries", 
+            value=analytics.get('successful_queries', 0),
+            help="Number of queries that were processed without errors"
+        )
+    
+    # Category distribution with pie chart
+    st.subheader("📊 Category Distribution Analysis")
+    
+    category_distribution = analytics.get('category_distribution', {})
+    
+    if category_distribution:
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.write("**Query Categories:**")
+            total_categories = sum(category_distribution.values())
+            
+            for category, count in category_distribution.items():
+                percentage = (count / total_categories * 100) if total_categories > 0 else 0
+                st.write(f"• **{category.replace('_', ' ').title()}**: {count} queries ({percentage:.1f}%)")
+        
+        with col2:
+            # Create pie chart for category distribution
+            if len(category_distribution) > 0:
+                categories = list(category_distribution.keys())
+                counts = list(category_distribution.values())
+                
+                # Create a more readable pie chart
+                fig = px.pie(
+                    values=counts,
+                    names=categories,
+                    title="Query Category Distribution",
+                    color_discrete_sequence=px.colors.qualitative.Set3
+                )
+                
+                # Customize the pie chart
+                fig.update_traces(
+                    textposition='inside',
+                    textinfo='percent+label',
+                    hole=0.3  # Make it a donut chart
+                )
+                
+                fig.update_layout(
+                    title_x=0.5,
+                    showlegend=True,
+                    legend=dict(
+                        orientation="v",
+                        yanchor="top",
+                        y=1,
+                        xanchor="left",
+                        x=1.05
+                    )
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("No category data available")
+    else:
+        st.info("📝 No category distribution data available")
+    
+    # Response length statistics
+    st.subheader("📏 Response Length Statistics")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.metric(
+            label="Minimum Length", 
+            value=f"{analytics.get('min_response_length', 0):.0f} chars",
+            help="Shortest response length"
+        )
+    
+    with col2:
+        st.metric(
+            label="Maximum Length", 
+            value=f"{analytics.get('max_response_length', 0):.0f} chars",
+            help="Longest response length"
+        )
+    
+    with col3:
+        st.metric(
+            label="Average Length", 
+            value=f"{analytics.get('avg_response_length', 0):.0f} chars",
+            help="Average response length across all queries"
+        )
+
+def display_basic_analytics(results):
+    """Display basic analytics when agent analytics are not available"""
+    
+    # Calculate basic metrics
     total_queries = len(results)
     successful_queries = len([r for r in results if not r['response'].startswith('ERROR')])
-    success_rate = (successful_queries / total_queries) * 100
+    success_rate = (successful_queries / total_queries) * 100 if total_queries > 0 else 0
     
     # Response length metrics
     response_lengths = [len(r['response']) for r in results if not r['response'].startswith('ERROR')]
-    avg_length = np.mean(response_lengths)
-    median_length = np.median(response_lengths)
+    avg_length = np.mean(response_lengths) if response_lengths else 0
+    median_length = np.median(response_lengths) if response_lengths else 0
     
-    # Reasoning metrics
-    reasoning_df = analyze_reasoning_patterns(results)
-    avg_reasoning = reasoning_df['reasoning_count'].mean()
-    responses_with_reasoning = reasoning_df['has_reasoning'].sum()
+    # Display metrics in 2x2 layout
+    st.subheader("📈 Basic Performance Metrics")
     
-    # Quality metrics
-    quality_df = calculate_quality_scores(results)
-    avg_quality = quality_df['quality_score'].mean()
-    high_quality_responses = (quality_df['quality_score'] >= 70).sum()
-    
-    # Display metrics in columns
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2 = st.columns(2)
     
     with col1:
         st.metric("Total Queries", total_queries)
@@ -335,31 +554,62 @@ def show_research_metrics(results):
     
     with col2:
         st.metric("Avg Response Length", f"{avg_length:.0f} chars")
-        st.metric("Median Length", f"{median_length:.0f} chars")
+        st.metric("Successful Queries", successful_queries)
     
-    with col3:
-        st.metric("Avg Reasoning Keywords", f"{avg_reasoning:.1f}")
-        st.metric("Responses with Reasoning", f"{responses_with_reasoning}/{successful_queries}")
+    # Simple category analysis
+    st.subheader("📊 Basic Category Analysis")
     
-    with col4:
-        st.metric("Avg Quality Score", f"{avg_quality:.1f}/100")
-        st.metric("High Quality Responses", f"{high_quality_responses}/{successful_queries}")
+    # Simple keyword-based categorization
+    categories = {
+        'technical_support': 0,
+        'billing_inquiry': 0,
+        'complaint_handling': 0,
+        'general_inquiry': 0
+    }
     
-    # Task routing summary
-    st.subheader("Task Routing Summary")
-    routing_df = analyze_task_routing(results)
-    routing_summary = routing_df['category'].value_counts()
+    for result in results:
+        query_lower = result['query'].lower()
+        if any(word in query_lower for word in ['broken', 'crash', 'error', 'technical']):
+            categories['technical_support'] += 1
+        elif any(word in query_lower for word in ['charge', 'billing', 'payment', 'refund']):
+            categories['billing_inquiry'] += 1
+        elif any(word in query_lower for word in ['complaint', 'angry', 'frustrated', 'damaged']):
+            categories['complaint_handling'] += 1
+        else:
+            categories['general_inquiry'] += 1
     
+    # Display category distribution
     col1, col2 = st.columns(2)
+    
     with col1:
-        st.write("**Routing Distribution:**")
-        for category, count in routing_summary.items():
-            st.write(f"- {category.replace('_', ' ').title()}: {count} queries")
+        st.write("**Query Categories:**")
+        for category, count in categories.items():
+            if count > 0:
+                percentage = (count / total_queries * 100) if total_queries > 0 else 0
+                st.write(f"• **{category.replace('_', ' ').title()}**: {count} queries ({percentage:.1f}%)")
     
     with col2:
-        fig = px.pie(values=routing_summary.values, names=routing_summary.index,
-                    title='Task Routing Distribution')
-        st.plotly_chart(fig, use_container_width=True)
+        # Create pie chart for basic categories
+        non_zero_categories = {k: v for k, v in categories.items() if v > 0}
+        
+        if non_zero_categories:
+            fig = px.pie(
+                values=list(non_zero_categories.values()),
+                names=list(non_zero_categories.keys()),
+                title="Basic Category Distribution",
+                color_discrete_sequence=px.colors.qualitative.Set3
+            )
+            
+            fig.update_traces(
+                textposition='inside',
+                textinfo='percent+label',
+                hole=0.3
+            )
+            
+            fig.update_layout(title_x=0.5)
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("No category data available")
 
 def show_export_options(results):
     """Show data export options"""

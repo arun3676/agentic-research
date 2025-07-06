@@ -5,4 +5,7 @@ openai
 numpy
 matplotlib
 pandas
-plotly 
+plotly
+torch
+transformers
+seaborn 

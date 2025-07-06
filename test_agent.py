@@ -7,21 +7,69 @@ This creates a dataset of agent responses with reasoning for research purposes.
 
 import json
 import os
+import random
 from datetime import datetime
 from agent import CustomerSupportAgent
 
-# Sample queries for testing
+# Comprehensive test queries across different categories
 SAMPLE_QUERIES = [
-    "Why is my order delayed?",
-    "I'm angry about the service quality",
-    "What's the return policy?",
-    "My order status shows pending",
-    "I want to file a complaint",
-    "How do I track my shipment?",
-    "The product arrived damaged",
-    "Can I cancel my order?",
+    # Technical Support (15 queries)
+    "My robot dog broke and won't respond to commands",
+    "The smart home system keeps disconnecting from WiFi",
+    "My drone crashed and the camera is damaged",
+    "The AI assistant keeps giving wrong answers",
+    "My virtual reality headset shows a black screen",
+    "The smart refrigerator won't connect to the app",
+    "My robot vacuum is stuck under the couch",
+    "The smart thermostat won't adjust temperature",
+    "My fitness tracker stopped syncing with my phone",
+    "The smart speaker won't recognize my voice commands",
+    "My gaming console keeps freezing during gameplay",
+    "The smart doorbell camera shows no video feed",
+    "My wireless earbuds won't pair with my device",
+    "The smart coffee maker won't brew properly",
+    "My tablet screen is completely unresponsive",
+    
+    # Billing Inquiries (12 queries)
+    "I was charged twice for the same subscription",
+    "Why did my monthly fee increase without notice?",
+    "I want to cancel my premium membership",
+    "There's an unauthorized charge on my account",
+    "How do I update my payment method?",
+    "I need a refund for a defective product",
+    "My invoice shows incorrect tax calculations",
+    "Can I get a discount for being a long-term customer?",
+    "I was charged for a service I never used",
+    "How do I dispute a billing error?",
+    "I need to change my billing cycle",
+    "Why am I being charged for shipping when it was free?",
+    
+    # Complaint Handling (13 queries)
+    "I'm extremely frustrated with your customer service",
+    "The delivery person was rude and unprofessional",
+    "My order arrived three weeks late",
+    "The product quality is much worse than advertised",
+    "I've been on hold for over an hour",
+    "Your website keeps crashing when I try to order",
+    "The customer service representative was unhelpful",
+    "My complaint from last week still hasn't been addressed",
+    "The product broke after only one week of use",
+    "I'm disappointed with the overall experience",
+    "The packaging was damaged and items were missing",
+    "Your return process is too complicated",
+    "I feel like my concerns are being ignored",
+    
+    # General Inquiries (10 queries)
     "What are your business hours?",
-    "I need help with my account"
+    "Do you ship internationally?",
+    "What's your return policy for electronics?",
+    "How do I create an account on your website?",
+    "What payment methods do you accept?",
+    "Do you offer student discounts?",
+    "What's the warranty period for your products?",
+    "How do I track my order status?",
+    "Do you have a loyalty program?",
+    "What's your privacy policy regarding customer data?"
 ]
 
 def run_batch_test():
